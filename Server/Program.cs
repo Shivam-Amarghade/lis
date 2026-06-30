@@ -85,7 +85,8 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role
     };
 });
 
@@ -153,19 +154,19 @@ using (var scope = app.Services.CreateScope())
     
     string encKey = config["Encryption:Key"] ?? "DefaultEncryptionKey1234567890123456";
     string encIv = config["Encryption:IV"] ?? "DefaultIV1234567";
-    string encEmail = EncryptionHelper.Encrypt("anukumari2000005@gmail.com", encKey, encIv);
-    
+    string encEmail = EncryptionHelper.Encrypt("anushkasahugenai@gmail.com", encKey, encIv);
     string encMobile = EncryptionHelper.Encrypt("6268503440", encKey, encIv);
     
-    var existingEmp = context.MstEmployees.FirstOrDefault(e => e.EmpId == "TEST001");
+    // Seed Test User 1 — MPO001 (Anushka Sahu, Admin)
+    var existingEmp = context.MstEmployees.FirstOrDefault(e => e.EmpId == "MPO001");
     if (existingEmp == null)
     {
         var emp = new LMSMaster.API.Models.MstEmployee
         {
-            EmpId = "TEST001",
-            EmpName = "Anu Kumari",
+            EmpId = "MPO001",
+            EmpName = "Anushka Sahu",
             DepartmentCode = "IT",
-            DesignationCode = "SE",
+            DesignationCode = "DIR",
             OfficialEmailEncrypted = encEmail,
             MobileNoEncrypted = encMobile,
             Gender = "Female",
@@ -175,11 +176,10 @@ using (var scope = app.Services.CreateScope())
             CreatedBy = "SYSTEM"
         };
         context.MstEmployees.Add(emp);
-        // ... login and role ...
         
         var login = new LMSMaster.API.Models.MstUserLogin
         {
-            EmpId = "TEST001",
+            EmpId = "MPO001",
             PasswordHash = LMSMaster.API.Helpers.PasswordHelper.HashPassword("Test@123"),
             IsLocked = "N",
             IsFirstLogin = "Y",
@@ -192,8 +192,8 @@ using (var scope = app.Services.CreateScope())
         
         var role = new LMSMaster.API.Models.MstEmployeeRole
         {
-            EmpId = "TEST001",
-            RoleId = 3, // EMP Role
+            EmpId = "MPO001",
+            RoleId = 1, // Admin Role
             IsDefaultRole = "Y",
             IsActive = "Y",
             CreatedDate = DateTime.UtcNow,
@@ -203,10 +203,178 @@ using (var scope = app.Services.CreateScope())
         
         context.SaveChanges();
     }
-    else if (existingEmp.MobileNoEncrypted != encMobile)
+
+    // Seed Test User 2 — MPO002 (Shivam Amarghade, Employee + Reporting Manager)
+    string encEmail2 = EncryptionHelper.Encrypt("shivamamarghade@gmail.com", encKey, encIv);
+    var existingEmp2 = context.MstEmployees.FirstOrDefault(e => e.EmpId == "MPO002");
+    if (existingEmp2 == null)
     {
-        existingEmp.MobileNoEncrypted = encMobile;
-        context.MstEmployees.Update(existingEmp);
+        var emp2 = new LMSMaster.API.Models.MstEmployee
+        {
+            EmpId = "MPO002",
+            EmpName = "Shivam Amarghade",
+            DepartmentCode = "IT",
+            DesignationCode = "MGR",
+            OfficialEmailEncrypted = encEmail2,
+            Gender = "Male",
+            EmployeeStatus = "Active",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployees.Add(emp2);
+
+        var login2 = new LMSMaster.API.Models.MstUserLogin
+        {
+            EmpId = "MPO002",
+            PasswordHash = LMSMaster.API.Helpers.PasswordHelper.HashPassword("Test@123"),
+            IsLocked = "N",
+            IsFirstLogin = "Y",
+            ForcePasswordChange = "N",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstUserLogins.Add(login2);
+
+        // Assign Employee Role (Default)
+        var role2Emp = new LMSMaster.API.Models.MstEmployeeRole
+        {
+            EmpId = "MPO002",
+            RoleId = 3, // EMP Role
+            IsDefaultRole = "Y",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployeeRoles.Add(role2Emp);
+
+        // Assign Reporting Manager Role
+        var role2Rm = new LMSMaster.API.Models.MstEmployeeRole
+        {
+            EmpId = "MPO002",
+            RoleId = 2, // RM Role
+            IsDefaultRole = "N",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployeeRoles.Add(role2Rm);
+
+        context.SaveChanges();
+    }
+
+    // Seed Test User 3 — MPO003 (Anu Kumari, Employee)
+    string encEmail3 = EncryptionHelper.Encrypt("anukumari2000005@gmail.com", encKey, encIv);
+    var existingEmp3 = context.MstEmployees.FirstOrDefault(e => e.EmpId == "MPO003");
+    if (existingEmp3 == null)
+    {
+        var emp3 = new LMSMaster.API.Models.MstEmployee
+        {
+            EmpId = "MPO003",
+            EmpName = "Anu Kumari",
+            DepartmentCode = "IT",
+            DesignationCode = "SE",
+            OfficialEmailEncrypted = encEmail3,
+            Gender = "Female",
+            EmployeeStatus = "Active",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployees.Add(emp3);
+
+        var login3 = new LMSMaster.API.Models.MstUserLogin
+        {
+            EmpId = "MPO003",
+            PasswordHash = LMSMaster.API.Helpers.PasswordHelper.HashPassword("Test@123"),
+            IsLocked = "N",
+            IsFirstLogin = "Y",
+            ForcePasswordChange = "N",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstUserLogins.Add(login3);
+
+        var role3 = new LMSMaster.API.Models.MstEmployeeRole
+        {
+            EmpId = "MPO003",
+            RoleId = 3, // EMP Role
+            IsDefaultRole = "Y",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployeeRoles.Add(role3);
+
+        context.SaveChanges();
+    }
+
+    // Seed Test User 4 — MPO004 (Rohan Verma, Employee + Reporting Manager)
+    string encEmail4 = EncryptionHelper.Encrypt("rohanverma.lms@gmail.com", encKey, encIv);
+    var existingEmp4 = context.MstEmployees.FirstOrDefault(e => e.EmpId == "MPO004");
+    if (existingEmp4 == null)
+    {
+        var emp4 = new LMSMaster.API.Models.MstEmployee
+        {
+            EmpId = "MPO004",
+            EmpName = "Rohan Verma",
+            DepartmentCode = "IT",
+            DesignationCode = "MGR",
+            OfficialEmailEncrypted = encEmail4,
+            Gender = "Male",
+            EmployeeStatus = "Active",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployees.Add(emp4);
+
+        var login4 = new LMSMaster.API.Models.MstUserLogin
+        {
+            EmpId = "MPO004",
+            PasswordHash = LMSMaster.API.Helpers.PasswordHelper.HashPassword("Test@123"),
+            IsLocked = "N",
+            IsFirstLogin = "Y",
+            ForcePasswordChange = "N",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstUserLogins.Add(login4);
+
+        // Assign Employee Role (Default)
+        var role4Emp = new LMSMaster.API.Models.MstEmployeeRole
+        {
+            EmpId = "MPO004",
+            RoleId = 3, // EMP Role
+            IsDefaultRole = "Y",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployeeRoles.Add(role4Emp);
+
+        // Assign Reporting Manager Role
+        var role4Rm = new LMSMaster.API.Models.MstEmployeeRole
+        {
+            EmpId = "MPO004",
+            RoleId = 2, // RM Role
+            IsDefaultRole = "N",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployeeRoles.Add(role4Rm);
+
+        context.SaveChanges();
+    }
+    else if (existingEmp4.OfficialEmailEncrypted != encEmail4)
+    {
+        // Update email if it changed
+        existingEmp4.OfficialEmailEncrypted = encEmail4;
+        context.MstEmployees.Update(existingEmp4);
         context.SaveChanges();
     }
 }

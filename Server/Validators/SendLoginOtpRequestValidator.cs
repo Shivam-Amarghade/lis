@@ -8,6 +8,8 @@ public class SendLoginOtpRequestValidator : AbstractValidator<SendLoginOtpReques
     public SendLoginOtpRequestValidator()
     {
         RuleFor(x => x.EmpId)
-            .NotEmpty().WithMessage("Employee ID is required.");
+            .NotEmpty().WithMessage("Employee ID is required.")
+            .MaximumLength(10).WithMessage("Employee ID must not exceed 10 characters.")
+            .Matches(@"^[A-Za-z0-9]+$").WithMessage("Employee ID must contain only alphanumeric characters.");
     }
 }

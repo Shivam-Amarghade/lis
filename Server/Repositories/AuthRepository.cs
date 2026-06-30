@@ -127,4 +127,25 @@ public class AuthRepository : IAuthRepository
         
         await _context.SaveChangesAsync();
     }
+
+    public async Task AddRoleSwitchHistoryAsync(TrnRoleSwitchHistory history)
+    {
+        _context.TrnRoleSwitchHistories.Add(history);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<MstEmployeeRole?> GetEmployeeRoleByIdAsync(string empId, int roleId)
+    {
+        return await _context.MstEmployeeRoles
+            .Include(er => er.Role)
+            .FirstOrDefaultAsync(er => er.EmpId == empId && er.IsActive == "Y" && er.RoleId == roleId && er.Role.IsActive == "Y");
+    }
+
+    public async Task<List<MstEmployeeRole>> GetEmployeeRolesWithJoinAsync(string empId)
+    {
+        return await _context.MstEmployeeRoles
+            .Include(er => er.Role)
+            .Where(er => er.EmpId == empId && er.IsActive == "Y" && er.Role.IsActive == "Y")
+            .ToListAsync();
+    }
 }

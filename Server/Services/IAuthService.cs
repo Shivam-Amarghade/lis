@@ -13,4 +13,5 @@ public interface IAuthService
     
     Task<ApiResponse<object>> SendLoginOtpAsync(SendLoginOtpRequest request);
     Task<ApiResponse<LoginResponse>> LoginWithOtpAsync(LoginWithOtpRequest request);
+    Task<SwitchRoleResponse> SwitchRoleAsync(string empId, string currentRoleCode, int targetRoleId, string ipAddress, string userAgent);
 }

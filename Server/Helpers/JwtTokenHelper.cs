@@ -14,7 +14,7 @@ public class JwtTokenHelper
         _configuration = configuration;
     }
 
-    public string GenerateJwtToken(string empId, string empName, int roleId, string roleName)
+    public string GenerateJwtToken(string empId, string empName, int roleId, string roleCode, string roleName)
     {
         var secretKey = _configuration["Jwt:Key"] ?? throw new ArgumentNullException("Jwt:Key is missing");
         var issuer = _configuration["Jwt:Issuer"] ?? throw new ArgumentNullException("Jwt:Issuer is missing");
@@ -29,6 +29,7 @@ public class JwtTokenHelper
             new Claim("emp_id", empId),
             new Claim("emp_name", empName),
             new Claim("role_id", roleId.ToString()),
+            new Claim("role_code", roleCode),
             new Claim(ClaimTypes.Role, roleName),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };

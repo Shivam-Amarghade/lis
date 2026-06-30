@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using LMSMaster.API.Models;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +35,8 @@ public partial class LMSMasterContext : DbContext
     public virtual DbSet<TrnOtp> TrnOtps { get; set; }
 
     public virtual DbSet<TrnUserSession> TrnUserSessions { get; set; }
+
+    public virtual DbSet<TrnRoleSwitchHistory> TrnRoleSwitchHistories { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -608,6 +610,56 @@ public partial class LMSMasterContext : DbContext
                 .HasForeignKey(d => d.EmpId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_usersession_emp");
+        });
+
+        modelBuilder.Entity<TrnRoleSwitchHistory>(entity =>
+        {
+            entity.HasKey(e => e.SwitchId);
+
+            entity.ToTable("trn_role_switch_history", "role");
+
+            entity.Property(e => e.SwitchId).HasColumnName("switch_id");
+            entity.Property(e => e.EmpId)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("emp_id");
+            entity.Property(e => e.OldRoleId).HasColumnName("old_role_id");
+            entity.Property(e => e.NewRoleId).HasColumnName("new_role_id");
+            entity.Property(e => e.SwitchTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("switch_time");
+            entity.Property(e => e.IpAddress)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("ip_address");
+            entity.Property(e => e.Browser)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("browser");
+            entity.Property(e => e.DeviceName)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("device_name");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_date");
+
+            entity.HasOne(d => d.Emp).WithMany()
+                .HasForeignKey(d => d.EmpId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_roleswitch_emp");
+
+            entity.HasOne(d => d.OldRole).WithMany()
+                .HasForeignKey(d => d.OldRoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_roleswitch_oldrole");
+
+            entity.HasOne(d => d.NewRole).WithMany()
+                .HasForeignKey(d => d.NewRoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_roleswitch_newrole");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  // In dev: Vite proxy forwards /api → http://laptop-432:5072/api (see vite.config.js)
+  // In dev: Vite proxy forwards /api → http://10.213.114.96:5072/api (see vite.config.js)
   // In prod: set VITE_API_BASE_URL env variable to the full server URL
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000,

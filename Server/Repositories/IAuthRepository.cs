@@ -25,4 +25,8 @@ public interface IAuthRepository
     Task<TrnUserSession?> GetUserSessionByRefreshTokenAsync(string refreshToken);
     Task UpdateUserSessionAsync(TrnUserSession session);
     Task RevokeAllUserSessionsAsync(string empId);
+
+    Task AddRoleSwitchHistoryAsync(TrnRoleSwitchHistory history);
+    Task<MstEmployeeRole?> GetEmployeeRoleByIdAsync(string empId, int roleId);
+    Task<List<MstEmployeeRole>> GetEmployeeRolesWithJoinAsync(string empId);
 }
