@@ -214,14 +214,15 @@ public class AuthService : IAuthService
             Token = otpCode,
             Purpose = "PASSWORD_RESET",
             GeneratedTime = DateTime.UtcNow,
-            ExpiryTime = DateTime.UtcNow.AddMinutes(15),
+            ExpiryTime = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("OtpSettings:PasswordResetExpiryMinutes", 5)),
             Verified = "N"
         });
 
         // Send Email
         string officialEmail = EncryptionHelper.Decrypt(employee.OfficialEmailEncrypted, encKey, encIv);
         string subject = "Your LMS Password Reset OTP";
-        string body = $"<h2>Password Reset OTP</h2><p>Your One-Time Password to reset your password is: <b>{otpCode}</b></p><p>This code will expire in 15 minutes. Do not share it with anyone.</p>";
+        int expiryMinutes = _configuration.GetValue<int>("OtpSettings:PasswordResetExpiryMinutes", 5);
+        string body = $"<h2>Password Reset OTP</h2><p>Your One-Time Password to reset your password is: <b>{otpCode}</b></p><p>This code will expire in {expiryMinutes} minutes. Do not share it with anyone.</p>";
         await _emailService.SendEmailAsync(officialEmail, subject, body);
 
         return ApiResponse<object>.SuccessResponse(new { ResetToken = otpCode }, "Password reset OTP sent to your registered email");
@@ -313,7 +314,7 @@ public class AuthService : IAuthService
             Token = otpCode,
             Purpose = "LOGIN_OTP",
             GeneratedTime = DateTime.UtcNow,
-            ExpiryTime = DateTime.UtcNow.AddMinutes(5),
+            ExpiryTime = DateTime.UtcNow.AddMinutes(_configuration.GetValue<int>("OtpSettings:LoginExpiryMinutes", 5)),
             Verified = "N"
         };
         await _authRepository.AddOtpAsync(otpRecord);
@@ -321,7 +322,8 @@ public class AuthService : IAuthService
         // Send Email
         string officialEmail = EncryptionHelper.Decrypt(employee.OfficialEmailEncrypted, encKey, encIv);
         string subject = "Your LMS Login OTP";
-        string body = $"<h2>Login OTP</h2><p>Your One-Time Password for login is: <b>{otpCode}</b></p><p>This code will expire in 5 minutes. Do not share it with anyone.</p>";
+        int expiryMinutes = _configuration.GetValue<int>("OtpSettings:LoginExpiryMinutes", 5);
+        string body = $"<h2>Login OTP</h2><p>Your One-Time Password for login is: <b>{otpCode}</b></p><p>This code will expire in {expiryMinutes} minutes. Do not share it with anyone.</p>";
         await _emailService.SendEmailAsync(officialEmail, subject, body);
 
         // For testing purposes, we return the OTP. In production, remove the Data payload!

@@ -31,12 +31,6 @@ public class EmailService : IEmailService
                 port = 587;
             }
 
-            using var client = new SmtpClient(host, port)
-            {
-                Credentials = new NetworkCredential(username, password),
-                EnableSsl = true
-            };
-
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(senderEmail),
@@ -46,13 +40,34 @@ public class EmailService : IEmailService
             };
             mailMessage.To.Add(toEmail);
 
-            await client.SendMailAsync(mailMessage);
-            _logger.LogInformation("Email successfully sent to {Email}", toEmail);
+            // Fire and forget so the API responds instantly
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using var client = new SmtpClient(host, port)
+                    {
+                        Credentials = new NetworkCredential(username, password),
+                        EnableSsl = true
+                    };
+                    await client.SendMailAsync(mailMessage);
+                    _logger.LogInformation("Email successfully sent to {Email}", toEmail);
+                }
+                catch (Exception innerEx)
+                {
+                    _logger.LogError(innerEx, "Failed to send email to {Email}", toEmail);
+                }
+                finally
+                {
+                    mailMessage.Dispose();
+                }
+            });
+
+            await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {Email}", toEmail);
-            // We swallow the exception here so the API doesn't crash if SMTP is not configured
+            _logger.LogError(ex, "Failed to prepare email to {Email}", toEmail);
         }
     }
 }
