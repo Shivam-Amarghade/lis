@@ -29,6 +29,23 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Configure CORS — allow frontend origins
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173",    // Vite dev server
+                "http://localhost:3000",    // alternative dev port
+                "http://10.213.114.96:5173" // network access
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 // Configure Entity Framework Core Database First (Simulated)
 builder.Services.AddDbContext<LMSMasterContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -118,6 +135,8 @@ app.UseSwaggerUI();
 
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 
