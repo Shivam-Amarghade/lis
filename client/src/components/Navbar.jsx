@@ -29,11 +29,11 @@ const Navbar = () => {
         {/* Desktop Links */}
         <div className="navbar__links">
           <Link to="/" className="navbar__link">Home</Link>
-          {isAuthenticated && (
-            <Link to="/change-password" className="navbar__link">
-              Change Password
-            </Link>
-          )}
+          {/* {isAuthenticated && (
+            // <Link to="/change-password" className="navbar__link">
+            //   Change Password
+            // </Link>
+          )} */}
         </div>
 
         {/* Auth Buttons */}

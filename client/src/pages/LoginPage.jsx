@@ -129,6 +129,8 @@ const LoginPage = () => {
 
   // ── Login mode: "password" | "otp" ───────────────────────────────────────
   const [loginType, setLoginType] = useState("password");
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [isOtpSentRequested, setIsOtpSentRequested] = useState(false);
 
   // ── Form fields (matching real API) ──────────────────────────────────────
   const [formData, setFormData] = useState({ empId: "", password: "", otpToken: "" });
@@ -158,9 +160,31 @@ const LoginPage = () => {
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => { dispatch(clearAuthMessage()); }, [dispatch]);
 
-  useEffect(() => { if (isAuthenticated) navigate("/"); }, [isAuthenticated, navigate]);
+  useEffect(() => { if (isAuthenticated) navigate("/dashboard"); }, [isAuthenticated, navigate]);
 
   useEffect(() => { loadCaptcha(); }, []);
+
+  useEffect(() => {
+    if (otpTimer > 0) {
+      const timerId = setTimeout(() => setOtpTimer(otpTimer - 1), 1000);
+      return () => clearTimeout(timerId);
+    }
+  }, [otpTimer]);
+
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    if (isOtpSentRequested && !loading) {
+      if (successMessage) {
+        setOtpTimer(120);
+      }
+      setIsOtpSentRequested(false);
+    }
+  }, [loading, successMessage, isOtpSentRequested]);
 
   useEffect(() => {
     const handleMouseMove = (e) => { setMouseX(e.clientX); setMouseY(e.clientY); };
@@ -265,6 +289,7 @@ const LoginPage = () => {
       setFormErrors((prev) => ({ ...prev, empId: "Employee ID is required to send OTP." }));
       return;
     }
+    setIsOtpSentRequested(true);
     dispatch(sendOTPAction(formData.empId));
   };
 
@@ -298,22 +323,25 @@ const LoginPage = () => {
     <div style={{ minHeight: "100vh", display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
 
       {/* ── LEFT PANEL: Animated characters ─────────────────────────────── */}
-      <div style={{
+      <div className="bg-gradient-to-br from-indigo-950 via-purple-900 to-slate-900" style={{
         position: "relative", display: "flex", flexDirection: "column",
         justifyContent: "space-between",
-        background: "linear-gradient(to top left, #030637, #3c0753, #720455)",
         padding: "48px", color: "#fff", overflow: "hidden",
       }}>
         {/* Logo */}
         <div style={{ position: "relative", zIndex: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "1.1rem", fontWeight: 700 }}>
-            <div style={{
-              background: "#fff", borderRadius: "8px", padding: "6px 10px",
-              fontWeight: 900, color: "#4f46e5", fontSize: "1rem", letterSpacing: "-0.5px"
-            }}>
-              i<span style={{ color: "#7c3aed" }}>Evolve</span>
+          <div className="relative z-20 w-full flex justify-start -mt-4">
+            <div className="flex items-center gap-6">
+              <img src="public/logo4.png" alt="iEvolve Logo" className="h-52 w-52 object-contain" />
+              <div className="flex flex-col items-start justify-center gap-1">
+                <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">
+                  iEvolve
+                </h1>
+                <h2 className="text-2xl font-semibold tracking-tight text-white/90 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">
+                  Learning Management System
+                </h2>
+              </div>
             </div>
-            <span>LMS</span>
           </div>
         </div>
 
@@ -326,7 +354,7 @@ const LoginPage = () => {
               position: "absolute", bottom: 0, left: "70px",
               width: "180px",
               height: (isTyping || isHidingEyes) ? "440px" : "400px",
-              backgroundColor: "#6C3FF5",
+              backgroundColor: "#6536f1ff",
               borderRadius: "10px 10px 0 0", zIndex: 1,
               transition: "all 0.7s ease-in-out",
               transform: passwordVisible
@@ -357,7 +385,7 @@ const LoginPage = () => {
             <div ref={blackRef} style={{
               position: "absolute", bottom: 0, left: "240px",
               width: "120px", height: "310px",
-              backgroundColor: "#2D2D2D", borderRadius: "8px 8px 0 0", zIndex: 2,
+              backgroundColor: "#040404ff", borderRadius: "8px 8px 0 0", zIndex: 2,
               transition: "all 0.7s ease-in-out",
               transform: passwordVisible
                 ? "skewX(0deg)"
@@ -389,7 +417,7 @@ const LoginPage = () => {
             <div ref={orangeRef} style={{
               position: "absolute", bottom: 0, left: "0px",
               width: "240px", height: "200px",
-              backgroundColor: "#FF9B6B", borderRadius: "120px 120px 0 0", zIndex: 3,
+              backgroundColor: "#e56023ff", borderRadius: "120px 120px 0 0", zIndex: 3,
               transition: "all 0.7s ease-in-out",
               transform: passwordVisible ? "skewX(0deg)" : `skewX(${orangePos.bodySkew || 0}deg)`,
               transformOrigin: "bottom center",
@@ -413,7 +441,7 @@ const LoginPage = () => {
             <div ref={yellowRef} style={{
               position: "absolute", bottom: 0, left: "310px",
               width: "140px", height: "230px",
-              backgroundColor: "#E8D754", borderRadius: "70px 70px 0 0", zIndex: 4,
+              backgroundColor: "#ecd10bff", borderRadius: "70px 70px 0 0", zIndex: 4,
               transition: "all 0.7s ease-in-out",
               transform: passwordVisible ? "skewX(0deg)" : `skewX(${yellowPos.bodySkew || 0}deg)`,
               transformOrigin: "bottom center",
@@ -443,12 +471,7 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Footer links */}
-        <div style={{ position: "relative", zIndex: 20, display: "flex", gap: "32px", fontSize: "0.8rem", color: "rgba(255,255,255,0.55)" }}>
-          <Link to="/privacy" style={{ color: "inherit", textDecoration: "none" }}>Privacy Policy</Link>
-          <Link to="/terms" style={{ color: "inherit", textDecoration: "none" }}>Terms of Service</Link>
-          <Link to="/contact" style={{ color: "inherit", textDecoration: "none" }}>Contact</Link>
-        </div>
+
 
         {/* Background blobs */}
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
@@ -519,7 +542,7 @@ const LoginPage = () => {
             {/* Employee ID */}
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               <label htmlFor="empId" style={{ fontSize: "0.875rem", fontWeight: 600, color: "#374151" }}>
-                Employee ID
+                Username
               </label>
               <input
                 id="empId"
@@ -602,13 +625,14 @@ const LoginPage = () => {
                       color: "#111827", background: "#fff", boxSizing: "border-box",
                     }}
                   />
-                  <button type="button" onClick={handleSendOTP} disabled={loading} style={{
+                  <button type="button" onClick={handleSendOTP} disabled={loading || otpTimer > 0} style={{
                     padding: "0 18px", height: "48px", borderRadius: "8px",
-                    background: "#4f46e5", color: "#fff", border: "none", cursor: "pointer",
+                    background: (loading || otpTimer > 0) ? "#9ca3af" : "#4f46e5", color: "#fff", border: "none", cursor: (loading || otpTimer > 0) ? "not-allowed" : "pointer",
                     fontWeight: 600, fontSize: "0.875rem", whiteSpace: "nowrap",
                     opacity: loading ? 0.7 : 1,
+                    transition: "all 0.2s"
                   }}>
-                    {loading ? "Sending…" : "Send OTP"}
+                    {loading ? "Sending…" : otpTimer > 0 ? formatTime(otpTimer) : "Send OTP"}
                   </button>
                 </div>
                 {formErrors.otpToken && <small style={{ color: "#ef4444", fontSize: "0.78rem" }}>{formErrors.otpToken}</small>}
@@ -617,7 +641,16 @@ const LoginPage = () => {
 
             {/* Captcha */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {captchaLoading ? (
+              {/* Security Check label */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#111827", letterSpacing: "0.03em", textTransform: "uppercase" }}>
+                  Security Check
+                </span>
+              </div>
+{captchaLoading ? (
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "center",
                   height: "60px", borderRadius: "8px",
@@ -694,7 +727,7 @@ const LoginPage = () => {
                       cursor: "pointer", fontSize: "0.875rem", color: "#374151",
                       transition: "all 0.2s",
                     }}>
-                      🔄
+                      Refresh
                     </button>
                   </div>
                   {formErrors.captchaValue && <small style={{ color: "#ef4444", fontSize: "0.78rem" }}>{formErrors.captchaValue}</small>}

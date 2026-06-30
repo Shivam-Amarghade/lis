@@ -89,3 +89,11 @@ export const loginWithOtpAPI = async ({ empId, otpToken, captchaToken, captchaVa
   });
   return response.data;
 };
+
+export const switchRole = async (roleId) => {
+  const response = await API.post("/auth/switch-role", { roleId: parseInt(roleId, 10) });
+  return response.data;
+};
+
+
+

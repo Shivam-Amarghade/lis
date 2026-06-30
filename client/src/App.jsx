@@ -7,7 +7,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ChangePasswordPage from './pages/ChangePasswordPage';
+import DashboardPage from './pages/DeshboradPage';
+
 
 const App = () => {
   return (
@@ -19,14 +20,15 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         {/* Protected Routes */}
-        <Route
-          path="/change-password"
+        <Route 
+          path="/dashboard" 
           element={
             <ProtectedRoute>
-              <ChangePasswordPage />
+              <DashboardPage />
             </ProtectedRoute>
-          }
+          } 
         />
+
 
         {/* 404 */}
         <Route

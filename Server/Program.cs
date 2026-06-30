@@ -209,6 +209,66 @@ using (var scope = app.Services.CreateScope())
         context.MstEmployees.Update(existingEmp);
         context.SaveChanges();
     }
+
+    // --- SEED TEST002 ---
+    var existingEmp2 = context.MstEmployees.FirstOrDefault(e => e.EmpId == "TEST002");
+    if (existingEmp2 == null)
+    {
+        var emp2 = new LMSMaster.API.Models.MstEmployee
+        {
+            EmpId = "TEST002",
+            EmpName = "Shivam Admin",
+            DepartmentCode = "IT",
+            DesignationCode = "MGR",
+            OfficialEmailEncrypted = encEmail,
+            MobileNoEncrypted = encMobile,
+            Gender = "Male",
+            EmployeeStatus = "Active",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployees.Add(emp2);
+        
+        var login2 = new LMSMaster.API.Models.MstUserLogin
+        {
+            EmpId = "TEST002",
+            PasswordHash = LMSMaster.API.Helpers.PasswordHelper.HashPassword("Shivam@1234"),
+            IsLocked = "N",
+            IsFirstLogin = "N",
+            ForcePasswordChange = "N",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstUserLogins.Add(login2);
+        
+        // Add ADM Role (Role ID 1)
+        var roleAdm = new LMSMaster.API.Models.MstEmployeeRole
+        {
+            EmpId = "TEST002",
+            RoleId = 1, // ADM
+            IsDefaultRole = "Y",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployeeRoles.Add(roleAdm);
+
+        // Add EMP Role (Role ID 3)
+        var roleEmp = new LMSMaster.API.Models.MstEmployeeRole
+        {
+            EmpId = "TEST002",
+            RoleId = 3, // EMP
+            IsDefaultRole = "N",
+            IsActive = "Y",
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = "SYSTEM"
+        };
+        context.MstEmployeeRoles.Add(roleEmp);
+        
+        context.SaveChanges();
+    }
 }
 
 app.Run();
