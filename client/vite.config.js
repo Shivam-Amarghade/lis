@@ -9,9 +9,9 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // All /api/* requests  → forwarded to the real backend server
+      // All /api/* requests 10.213.114.96  → forwarded to the real backend server
       '/api': {
-        target: 'http://10.213.114.96:5072',
+        target: 'http://localhost:5072',
         changeOrigin: true,
         secure: false,
       },

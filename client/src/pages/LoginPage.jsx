@@ -160,7 +160,7 @@ const LoginPage = () => {
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => { dispatch(clearAuthMessage()); }, [dispatch]);
 
-  useEffect(() => { if (isAuthenticated) navigate("/dashboard"); }, [isAuthenticated, navigate]);
+  useEffect(() => { if (isAuthenticated) navigate("/"); }, [isAuthenticated, navigate]);
 
   useEffect(() => { loadCaptcha(); }, []);
 
