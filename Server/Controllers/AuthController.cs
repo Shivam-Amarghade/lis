@@ -126,4 +126,24 @@ public class AuthController : ControllerBase
 
         return Ok(response);
     }
+
+    /// <summary>
+    /// Switches the user's active role.
+    /// </summary>
+    [HttpPost("switch-role")]
+    [Authorize]
+    public async Task<IActionResult> SwitchRole([FromBody] SwitchRoleRequest request)
+    {
+        var empId = User.FindFirstValue("emp_id") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        var currentRoleCode = User.FindFirstValue("role_code") ?? string.Empty;
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+        var userAgent = Request.Headers["User-Agent"].ToString() ?? string.Empty;
+
+        var response = await _authService.SwitchRoleAsync(empId, currentRoleCode, request.RoleId, ipAddress, userAgent);
+        if (!response.Success)
+            return BadRequest(response);
+
+        return Ok(response);
+    }
 }

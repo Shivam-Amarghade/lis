@@ -8,9 +8,13 @@ public class VerifyOtpRequestValidator : AbstractValidator<VerifyOtpRequest>
     public VerifyOtpRequestValidator()
     {
         RuleFor(x => x.EmpId)
-            .NotEmpty().WithMessage("Employee ID is required.");
-            
+            .NotEmpty().WithMessage("Employee ID is required.")
+            .MaximumLength(10).WithMessage("Employee ID must not exceed 10 characters.")
+            .Matches(@"^[A-Za-z0-9]+$").WithMessage("Employee ID must contain only alphanumeric characters.");
+
         RuleFor(x => x.OtpToken)
-            .NotEmpty().WithMessage("OTP token is required.");
+            .NotEmpty().WithMessage("OTP is required.")
+            .Length(6, 6).WithMessage("OTP must be exactly 6 digits.")
+            .Matches(@"^\d{6}$").WithMessage("OTP must contain only digits.");
     }
 }

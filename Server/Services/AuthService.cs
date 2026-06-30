@@ -95,11 +95,45 @@ public class AuthService : IAuthService
         await _authRepository.UpdateUserLoginAsync(userLogin);
         await LogLoginHistoryAsync(employee.EmpId, "Success", null);
 
-        var roles = await _authRepository.GetEmployeeRolesAsync(employee.EmpId);
-        int mainRoleId = roles.FirstOrDefault()?.RoleId ?? 0;
-        string mainRoleName = roles.FirstOrDefault()?.RoleName ?? string.Empty;
+        var empRoles = await _authRepository.GetEmployeeRolesWithJoinAsync(employee.EmpId);
+        var rolesList = empRoles.Select(er => new RoleDto
+        {
+            RoleId = er.Role.RoleId,
+            RoleCode = er.Role.RoleCode,
+            RoleName = er.Role.RoleName,
+            IsDefaultRole = er.IsDefaultRole == "Y"
+        }).ToList();
 
-        string token = _jwtTokenHelper.GenerateJwtToken(employee.EmpId, employee.EmpName, mainRoleId, mainRoleName);
+        string defaultRoleCode = string.Empty;
+        int defaultRoleId = 0;
+        string defaultRoleName = string.Empty;
+
+        if (rolesList.Count == 1)
+        {
+            var singleRole = rolesList.First();
+            defaultRoleCode = singleRole.RoleCode;
+            defaultRoleId = singleRole.RoleId;
+            defaultRoleName = singleRole.RoleName;
+        }
+        else if (rolesList.Count > 1)
+        {
+            var empRole = rolesList.FirstOrDefault(r => r.RoleCode == "EMP");
+            if (empRole != null)
+            {
+                defaultRoleCode = empRole.RoleCode;
+                defaultRoleId = empRole.RoleId;
+                defaultRoleName = empRole.RoleName;
+            }
+            else
+            {
+                var markedDefault = rolesList.FirstOrDefault(r => r.IsDefaultRole) ?? rolesList.First();
+                defaultRoleCode = markedDefault.RoleCode;
+                defaultRoleId = markedDefault.RoleId;
+                defaultRoleName = markedDefault.RoleName;
+            }
+        }
+
+        string token = _jwtTokenHelper.GenerateJwtToken(employee.EmpId, employee.EmpName, defaultRoleId, defaultRoleCode, defaultRoleName);
         string refreshToken = Guid.NewGuid().ToString("N");
 
         await _authRepository.AddUserSessionAsync(new TrnUserSession
@@ -116,9 +150,11 @@ public class AuthService : IAuthService
         {
             Token = token,
             RefreshToken = refreshToken,
-            EmpId = employee.EmpId,
-            EmpName = employee.EmpName,
-            Roles = roles.Select(r => r.RoleName).ToList(),
+            EmployeeId = employee.EmpId,
+            EmployeeName = employee.EmpName,
+            DefaultRole = defaultRoleCode,
+            ShowRoleSwitcher = rolesList.Count > 1,
+            Roles = rolesList,
             IsFirstLogin = userLogin.IsFirstLogin == "Y"
         };
 
@@ -164,11 +200,45 @@ public class AuthService : IAuthService
         var userLogin = await _authRepository.GetUserLoginByEmpIdAsync(session.EmpId);
         if (userLogin == null) return ApiResponse<LoginResponse>.ErrorResponse("Employee login record not found");
 
-        var roles = await _authRepository.GetEmployeeRolesAsync(session.EmpId);
-        int mainRoleId = roles.FirstOrDefault()?.RoleId ?? 0;
-        string mainRoleName = roles.FirstOrDefault()?.RoleName ?? string.Empty;
+        var empRoles = await _authRepository.GetEmployeeRolesWithJoinAsync(session.EmpId);
+        var rolesList = empRoles.Select(er => new RoleDto
+        {
+            RoleId = er.Role.RoleId,
+            RoleCode = er.Role.RoleCode,
+            RoleName = er.Role.RoleName,
+            IsDefaultRole = er.IsDefaultRole == "Y"
+        }).ToList();
 
-        string newToken = _jwtTokenHelper.GenerateJwtToken(employee.EmpId, employee.EmpName, mainRoleId, mainRoleName);
+        string defaultRoleCode = string.Empty;
+        int defaultRoleId = 0;
+        string defaultRoleName = string.Empty;
+
+        if (rolesList.Count == 1)
+        {
+            var singleRole = rolesList.First();
+            defaultRoleCode = singleRole.RoleCode;
+            defaultRoleId = singleRole.RoleId;
+            defaultRoleName = singleRole.RoleName;
+        }
+        else if (rolesList.Count > 1)
+        {
+            var empRole = rolesList.FirstOrDefault(r => r.RoleCode == "EMP");
+            if (empRole != null)
+            {
+                defaultRoleCode = empRole.RoleCode;
+                defaultRoleId = empRole.RoleId;
+                defaultRoleName = empRole.RoleName;
+            }
+            else
+            {
+                var markedDefault = rolesList.FirstOrDefault(r => r.IsDefaultRole) ?? rolesList.First();
+                defaultRoleCode = markedDefault.RoleCode;
+                defaultRoleId = markedDefault.RoleId;
+                defaultRoleName = markedDefault.RoleName;
+            }
+        }
+
+        string newToken = _jwtTokenHelper.GenerateJwtToken(employee.EmpId, employee.EmpName, defaultRoleId, defaultRoleCode, defaultRoleName);
         string newRefreshToken = Guid.NewGuid().ToString("N");
 
         session.IsActive = "N";
@@ -188,9 +258,11 @@ public class AuthService : IAuthService
         {
             Token = newToken,
             RefreshToken = newRefreshToken,
-            EmpId = employee.EmpId,
-            EmpName = employee.EmpName,
-            Roles = roles.Select(r => r.RoleName).ToList(),
+            EmployeeId = employee.EmpId,
+            EmployeeName = employee.EmpName,
+            DefaultRole = defaultRoleCode,
+            ShowRoleSwitcher = rolesList.Count > 1,
+            Roles = rolesList,
             IsFirstLogin = userLogin.IsFirstLogin == "Y"
         };
 
@@ -368,13 +440,45 @@ public class AuthService : IAuthService
         userLogin.FailedLoginAttempts = 0;
         await _authRepository.UpdateUserLoginAsync(userLogin);
 
-        var roles = await _authRepository.GetEmployeeRolesAsync(employee.EmpId);
-        var role = roles.FirstOrDefault();
-        int roleId = role?.RoleId ?? 0;
-        string roleName = role?.RoleName ?? "User";
-        List<string> roleNames = roles.Select(r => r.RoleName).ToList();
+        var empRoles = await _authRepository.GetEmployeeRolesWithJoinAsync(employee.EmpId);
+        var rolesList = empRoles.Select(er => new RoleDto
+        {
+            RoleId = er.Role.RoleId,
+            RoleCode = er.Role.RoleCode,
+            RoleName = er.Role.RoleName,
+            IsDefaultRole = er.IsDefaultRole == "Y"
+        }).ToList();
 
-        string jwtToken = _jwtTokenHelper.GenerateJwtToken(employee.EmpId, employee.EmpName, roleId, roleName);
+        string defaultRoleCode = string.Empty;
+        int defaultRoleId = 0;
+        string defaultRoleName = string.Empty;
+
+        if (rolesList.Count == 1)
+        {
+            var singleRole = rolesList.First();
+            defaultRoleCode = singleRole.RoleCode;
+            defaultRoleId = singleRole.RoleId;
+            defaultRoleName = singleRole.RoleName;
+        }
+        else if (rolesList.Count > 1)
+        {
+            var empRole = rolesList.FirstOrDefault(r => r.RoleCode == "EMP");
+            if (empRole != null)
+            {
+                defaultRoleCode = empRole.RoleCode;
+                defaultRoleId = empRole.RoleId;
+                defaultRoleName = empRole.RoleName;
+            }
+            else
+            {
+                var markedDefault = rolesList.FirstOrDefault(r => r.IsDefaultRole) ?? rolesList.First();
+                defaultRoleCode = markedDefault.RoleCode;
+                defaultRoleId = markedDefault.RoleId;
+                defaultRoleName = markedDefault.RoleName;
+            }
+        }
+
+        string jwtToken = _jwtTokenHelper.GenerateJwtToken(employee.EmpId, employee.EmpName, defaultRoleId, defaultRoleCode, defaultRoleName);
         string refreshToken = Guid.NewGuid().ToString("N");
 
         var newSession = new TrnUserSession
@@ -409,12 +513,76 @@ public class AuthService : IAuthService
         {
             Token = jwtToken,
             RefreshToken = refreshToken,
-            EmpId = employee.EmpId,
-            EmpName = employee.EmpName,
-            Roles = roleNames,
+            EmployeeId = employee.EmpId,
+            EmployeeName = employee.EmpName,
+            DefaultRole = defaultRoleCode,
+            ShowRoleSwitcher = rolesList.Count > 1,
+            Roles = rolesList,
             IsFirstLogin = userLogin.IsFirstLogin == "Y"
         };
 
         return ApiResponse<LoginResponse>.SuccessResponse(responseData, "Login Successful");
+    }
+
+    public async Task<SwitchRoleResponse> SwitchRoleAsync(string empId, string currentRoleCode, int targetRoleId, string ipAddress, string userAgent)
+    {
+        var employee = await _authRepository.GetEmployeeByIdAsync(empId);
+        if (employee == null)
+        {
+            return new SwitchRoleResponse { Success = false, Message = "Employee not found." };
+        }
+
+        var targetEmpRole = await _authRepository.GetEmployeeRoleByIdAsync(empId, targetRoleId);
+        if (targetEmpRole == null)
+        {
+            return new SwitchRoleResponse { Success = false, Message = "User cannot switch to a role that is not assigned." };
+        }
+
+        var allRoles = await _authRepository.GetEmployeeRolesWithJoinAsync(empId);
+        var currentEmpRole = allRoles.FirstOrDefault(er => er.Role.RoleCode == currentRoleCode);
+        int currentRoleId = currentEmpRole?.RoleId ?? 0;
+
+        string newToken = _jwtTokenHelper.GenerateJwtToken(
+            employee.EmpId,
+            employee.EmpName,
+            targetEmpRole.Role.RoleId,
+            targetEmpRole.Role.RoleCode,
+            targetEmpRole.Role.RoleName
+        );
+
+        string browser = "Unknown";
+        string device = "Unknown";
+        if (!string.IsNullOrEmpty(userAgent))
+        {
+            if (userAgent.Contains("Chrome")) browser = "Chrome";
+            else if (userAgent.Contains("Firefox")) browser = "Firefox";
+            else if (userAgent.Contains("Safari")) browser = "Safari";
+            else if (userAgent.Contains("Edge")) browser = "Edge";
+
+            if (userAgent.Contains("Mobile")) device = "Mobile";
+            else if (userAgent.Contains("Tablet")) device = "Tablet";
+            else device = "Desktop";
+        }
+
+        var history = new TrnRoleSwitchHistory
+        {
+            EmpId = employee.EmpId,
+            OldRoleId = currentRoleId,
+            NewRoleId = targetEmpRole.Role.RoleId,
+            SwitchTime = DateTime.UtcNow,
+            IpAddress = ipAddress,
+            Browser = browser,
+            DeviceName = device,
+            CreatedDate = DateTime.UtcNow
+        };
+        await _authRepository.AddRoleSwitchHistoryAsync(history);
+
+        return new SwitchRoleResponse
+        {
+            Success = true,
+            Message = "Role switched successfully.",
+            CurrentRole = targetEmpRole.Role.RoleCode,
+            Token = newToken
+        };
     }
 }
