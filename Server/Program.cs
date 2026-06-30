@@ -434,7 +434,6 @@ using (var scope = app.Services.CreateScope())
             CreatedBy = "SYSTEM"
         };
         context.MstEmployeeRoles.Add(roleEmp);
-        
         context.SaveChanges();
     }
 }
